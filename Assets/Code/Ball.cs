@@ -8,12 +8,15 @@ public class Ball : MonoBehaviour
     private Vector2 m_vBallPosition;
     private Vector2 m_vInitialBallPosition;
     private Vector2 m_vInitialBallSpeed;
+
+    private Vector2 m_vPlayerPaddleSpeed;
+
     private bool m_bDebug = false;
     private bool m_bPaused;
 	// Use this for initialization
 	void Start () 
     {
-        m_vInitialBallSpeed = new Vector2(10, 0);
+        m_vInitialBallSpeed = new Vector2(10, 1);
         m_vBallSpeed = m_vInitialBallSpeed;
 
         m_vScreenBoundary = new Vector2(Screen.width, Screen.height);
@@ -43,7 +46,7 @@ public class Ball : MonoBehaviour
     {
         if (m_bDebug)
         {
-            //Debug.Log(ToScreen(m_vBallPosition).ToString());
+            Debug.Log(ToScreen(m_vBallPosition).ToString());
         }
 
 
@@ -68,31 +71,46 @@ public class Ball : MonoBehaviour
     }
     void BallPaddleCollision(Collision2D coll)
     {
-        Collision2D c = coll;
+        //Collision2D c = coll;
 
-        Vector2 Average = Vector2.zero;
-        Vector2 Normal = Vector2.zero;
-        foreach(ContactPoint2D cp in c.contacts)
-        {
-            Average = new Vector2( Average.x + Mathf.Abs(cp.point.x), Average.y + Mathf.Abs(cp.point.y) );
-            Normal = new Vector2( Normal.x + (cp.normal.x), Normal.y + (cp.normal.y) );
-        }
-        Average /= c.contacts.Length;
-        Average = Average.normalized;
+        //Vector2 Average = Vector2.zero;
+        //Vector2 Normal = Vector2.zero;
+        //foreach(ContactPoint2D cp in c.contacts)
+        //{
+        //    Average = new Vector2( Average.x + Mathf.Abs(cp.point.x), Average.y + Mathf.Abs(cp.point.y) );
+        //    Normal = new Vector2( Normal.x + (cp.normal.x), Normal.y + (cp.normal.y) );
+        //}
+        //Average /= c.contacts.Length;
+        //Average = Average.normalized;
 
-        Normal /= c.contacts.Length;
-        Normal = Normal.normalized;
+        //Normal /= c.contacts.Length;
+        //Normal = Normal.normalized;
 
-        float distance = Vector2.Dot(Average, Normal);
+        //float distance = Vector2.Dot(Average, Normal);
 
-        Average = new Vector2(Average.x * Normal.x, Average.y * Normal.y); //LMFAO NO VECTOR MULTIPLICATION 
-        Debug.Log(Average.ToString());
-        m_vBallSpeed.x *= -Normal.x;
+        //Average = new Vector2(Average.x * Normal.x, Average.y * Normal.y); //LMFAO NO VECTOR MULTIPLICATION 
+        
+        //Debug.Log(c.rigidbody.velocity.ToString());
 
+
+        
+        m_vBallSpeed.x = -1 * Random.Range(5, 20) * (m_vBallSpeed/m_vBallSpeed.magnitude).x;
+        
+        Vector2 Force = m_vPlayerPaddleSpeed * 0.3f;
+        m_vBallSpeed.y = -Force.y;
+    }
+    void UpdatePaddleSpeed(Vector2 Speed)
+    {
+        m_vPlayerPaddleSpeed = Speed;
     }
     Vector3 ToScreen(Vector3 V)
     {
         return Camera.main.WorldToScreenPoint(V);
+    }
+    void Restart()
+    {
+        m_vBallPosition = new Vector2(0, 0);
+        m_vBallSpeed = m_vInitialBallSpeed;
     }
     void CheckGameStatus(object status)
     {

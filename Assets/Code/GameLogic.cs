@@ -21,6 +21,8 @@ public class GameLogic : MonoBehaviour
     #endregion
 
     #region GAME STATE AND STUFF
+
+    private const int m_iMaxScore = 2;
     public struct GameState
     {
         private bool m_bStatus;
@@ -69,7 +71,7 @@ public class GameLogic : MonoBehaviour
         GameState desiredState = (GameState)c;
 
         m_sStatus = desiredState;
-        
+
         InformBehaviours();
 
         m_PauseMenu.SetActive(false);
@@ -77,11 +79,11 @@ public class GameLogic : MonoBehaviour
     }
     void InformBehaviours()
     {
-        GameObject.Find("GameLogic").SendMessage("CheckGameStatus", m_sStatus);
         GameObject.Find("Ball").SendMessage("CheckGameStatus", m_sStatus);
     }
     private int m_iPlayerScore;
     private int m_iAIScore;
+
     #endregion
 
     #region UI STUFF
@@ -109,22 +111,45 @@ public class GameLogic : MonoBehaviour
     void OnPauseMenuGoBackButtonClick()
     {
         m_MenuButton.enabled = true;
+        m_sStatus.Paused = false;
+        InformBehaviours();
+        m_PauseMenu.SetActive(false);
     }
     void OnPauseMenuRestartButtonClick()
     {
         m_MenuButton.enabled = true;
+        Restart();
     }
     void OnMenuButtonClick()
     {
         m_MenuButton.enabled = false;
         m_sStatus.Paused = true;
-        GameObject.Find("GameLogic").SendMessage("CheckGameStatus", m_sStatus);
         GameObject.Find("Ball").SendMessage("CheckGameStatus", m_sStatus);
 
         m_PauseMenu.SetActive(true);
     }
     void UpdateScoreUI()
     {
+        if (m_iPlayerScore >= m_iMaxScore && m_sStatus.Status)
+        {
+            m_PlayerWinnerEndScreen.SetActive(true);
+
+            m_sStatus.Paused = true;
+            m_sStatus.Winner = 1;
+            m_sStatus.Status = false;
+
+            m_bStopUpdate = true;
+            InformBehaviours();
+        }
+        if (m_iAIScore >= m_iMaxScore && m_sStatus.Status)
+        {
+            m_AIWinnerEndScreen.SetActive(true);
+            m_sStatus.Paused = true;
+            m_sStatus.Winner = 0;
+            m_sStatus.Status = false;
+            m_bStopUpdate = true;
+            InformBehaviours();
+        }
         m_PlayerScoreText.text = "Player Score:" + m_iPlayerScore.ToString();
         m_AIScoreText.text = "AI Score:" + m_iAIScore.ToString();
     }
@@ -143,8 +168,11 @@ public class GameLogic : MonoBehaviour
 
         //PauseMenu
         m_PauseMenu = Resources.Load("PauseMenuPrefab", typeof(GameObject)) as GameObject;
-        m_PauseMenuButtons = m_PauseMenu.GetComponentsInChildren<Button>();
-        
+
+        m_PauseMenu = (GameObject)Instantiate(m_PauseMenu, new Vector3(0, 0, 0), new Quaternion());
+        m_PauseMenu.name = "PauseMenuPrefab";
+        m_PauseMenuButtons = GameObject.Find("PauseMenuPrefab").GetComponentsInChildren<Button>();
+
         for (int i = 0; i < m_PauseMenuButtons.Length; i++)
         {
             if (m_PauseMenuButtons[i].name == "ExitButton")
@@ -164,7 +192,7 @@ public class GameLogic : MonoBehaviour
             }
         }
 
-        m_PauseMenu = (GameObject)Instantiate(m_PauseMenu, new Vector3(0, 0, 0), new Quaternion());
+
         m_PauseMenu.SetActive(false);
         //Global Canvas
         for (int i = 0; i < m_CanvasButtons.Length; i++)
@@ -222,6 +250,12 @@ public class GameLogic : MonoBehaviour
 
         m_PlayerWinnerEndScreen = Resources.Load("PlayerWinnerScreen", typeof(GameObject)) as GameObject;
         m_AIWinnerEndScreen = Resources.Load("AIWinnerScreen", typeof(GameObject)) as GameObject;
+
+        m_PlayerWinnerEndScreen = (GameObject)Instantiate(m_PlayerWinnerEndScreen, new Vector3(0, 5, 0), new Quaternion());
+        m_AIWinnerEndScreen = (GameObject)Instantiate(m_AIWinnerEndScreen, new Vector3(0, 5, 0), new Quaternion());
+
+        m_PlayerWinnerEndScreen.SetActive(false);
+        m_AIWinnerEndScreen.SetActive(false);
     }
 
     // Update is called once per frame
@@ -229,28 +263,87 @@ public class GameLogic : MonoBehaviour
     {
         float dt = Time.fixedDeltaTime;
 
+
         if (!m_sStatus.Paused)
         {
-
             if (!m_bStopUpdate)
             {
                 if (m_sStatus.Status)
                 {
                     GameOver();
-                    m_sStatus.Status = false;
-                    RestartGame();
+                    if ((m_iPlayerScore != m_iMaxScore && m_iAIScore != m_iMaxScore))
+                    {
+                        m_sStatus.Status = false;
+                        RestartGame();
+                    }
+                    else
+                    {
+                        m_sStatus.Status = true;
+                    }
+
                 }
             }
             UpdateScoreUI();
         }
     }
-    void RestartGame()
+    void Restart()
     {
+        m_sStatus.Paused = false;
+        m_sStatus.Status = false;
+        m_bStopUpdate = false;
+
+        m_iPlayerScore = 0;
+        m_iAIScore = 0;
+        m_PauseMenu.SetActive(false);
+        if (m_PlayerWinnerEndScreen.activeInHierarchy)
+        {
+            (m_PlayerWinnerEndScreen).SetActive(false);
+            //Destroy(m_PlayerWinnerEndScreen); //Somehow it destroys the resource loaded WTF
+        }
+        if (m_AIWinnerEndScreen.activeInHierarchy)
+        {
+            (m_AIWinnerEndScreen).SetActive(false);
+            //Destroy(m_AIWinnerEndScreen); //Somehow it destroys the resource loaded WTF
+        }
+
+
+        GameObject.Find("Ball").SendMessage("Restart");
+
+        InformBehaviours();
         //m_Ball.transform.position = m_vInitialBallPosition;
         m_Paddle.transform.position = m_vInitialPlayerPaddlePosition;
         m_AIPaddle.transform.position = m_vInitialAIPaddlePosition;
     }
-   
+    void RestartGame()
+    {
+        m_sStatus.Paused = false;
+        m_sStatus.Status = false;
+        m_bStopUpdate = false;
+        if ((m_iPlayerScore >= m_iMaxScore || m_iAIScore >= m_iMaxScore))
+        {
+            m_iPlayerScore = 0;
+            m_iAIScore = 0;
+            m_PauseMenu.SetActive(false);
+            if (m_PlayerWinnerEndScreen.activeInHierarchy)
+            {
+                (m_PlayerWinnerEndScreen).SetActive(false);
+                //Destroy(m_PlayerWinnerEndScreen); //Somehow it destroys the resource loaded WTF
+            }
+            if (m_AIWinnerEndScreen.activeInHierarchy)
+            {
+                (m_AIWinnerEndScreen).SetActive(false);
+                //Destroy(m_AIWinnerEndScreen); //Somehow it destroys the resource loaded WTF
+            }
+        }
+
+
+
+        InformBehaviours();
+        //m_Ball.transform.position = m_vInitialBallPosition;
+        m_Paddle.transform.position = m_vInitialPlayerPaddlePosition;
+        m_AIPaddle.transform.position = m_vInitialAIPaddlePosition;
+    }
+
     Vector3 ToScreen(Vector3 V)
     {
         return Camera.main.WorldToScreenPoint(V);

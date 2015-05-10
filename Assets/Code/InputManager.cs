@@ -5,6 +5,7 @@ public class InputManager : MonoBehaviour
 {
     private GameObject m_LeftPaddle;
     private Vector2 m_vLeftPaddlePosition;
+    private Vector2 m_vLeftPaddleSpeed;
     private Vector2 m_vInitialPosition;
 
     private GameObject m_RightPaddle;
@@ -42,6 +43,7 @@ public class InputManager : MonoBehaviour
         }
 
         m_vRightPaddlePosition = Vector3.zero;
+        m_vLeftPaddleSpeed = Vector2.zero;
 
         m_bDragging = false;
 
@@ -57,6 +59,7 @@ public class InputManager : MonoBehaviour
     {
         if (!m_bPaused)
         {
+            #region Boring Input stuff
             if (Input.GetKeyDown(KeyCode.Escape))
                 Application.Quit();
 
@@ -79,11 +82,13 @@ public class InputManager : MonoBehaviour
                 if (Input.GetMouseButtonUp(0))
                     m_bDragging = false;
             }
-
+            #endregion
 
             CheckLefthandSide();
             ApplyPaddleTranslation();
+            UpdatePaddleLinearVelocity();
         }
+        #region More Boring Input
         if ((Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Ended) || Input.GetMouseButton(0))
         {
 
@@ -108,6 +113,10 @@ public class InputManager : MonoBehaviour
                 }
             }
         }
+        #endregion
+        
+        
+        
         m_vLastInputPosition = Vector3.zero;
     }
     void CheckLefthandSide()
@@ -126,7 +135,7 @@ public class InputManager : MonoBehaviour
         float halfX = m_vScreenBoundary.x * 0.5f;
         float halfY = m_vScreenBoundary.y * 0.5f;
 
-        m_vCurrentInputPosition = InputPosition + m_vLastInputPosition;
+        m_vCurrentInputPosition = InputPosition + m_vLastInputPosition; //m_vLastInputPosition is for awaking from pause screen so paddle wont jump somewhere ridiciluous
 
         if (m_vCurrentInputPosition.x <= halfX * 0.5f && m_bDragging)
         {
@@ -138,6 +147,7 @@ public class InputManager : MonoBehaviour
             float dx = dv.x;
             float dy = dv.y;
             Vector3 dyInScreenPos = (dv) * 0.020f;
+            m_vLeftPaddleSpeed = m_vCurrentInputPosition - m_vPreviousInputPosition;
             m_vLeftPaddlePosition += new Vector2(0, dyInScreenPos.y);
             m_vLeftPaddlePositionHandler.Next = m_vLeftPaddlePosition;
             m_vLeftPaddlePositionHandler.Previous = m_vLeftPaddlePositionHandler.Next;
@@ -172,5 +182,9 @@ public class InputManager : MonoBehaviour
 
         m_bPaused = desiredState.Paused;
         m_vPreviousInputPosition = m_vCurrentInputPosition;
+    }
+    void UpdatePaddleLinearVelocity()
+    {
+        GameObject.Find("Ball").SendMessage("UpdatePaddleSpeed", m_vLeftPaddleSpeed);
     }
 }
