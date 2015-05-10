@@ -18,11 +18,14 @@ public class GameLogic : MonoBehaviour
     private Vector3 m_vInitialBallPosition;
     private Vector3 m_vInitialPlayerPaddlePosition;
     private Vector3 m_vInitialAIPaddlePosition;
+    private float m_fTimer;
+    private bool m_bDelayAfterAScore;
     #endregion
 
     #region GAME STATE AND STUFF
 
     private const int m_iMaxScore = 2;
+    private const int m_iDelayBetweenScores = 3;
     public struct GameState
     {
         private bool m_bStatus;
@@ -93,6 +96,7 @@ public class GameLogic : MonoBehaviour
     private Text m_AIScoreText;
     private Button[] m_CanvasButtons;
     private Button m_MenuButton;
+    private Text m_DelayText;
 
     private GameObject m_PauseMenu;
     private Button[] m_PauseMenuButtons;
@@ -215,6 +219,16 @@ public class GameLogic : MonoBehaviour
         }
         m_PlayerScoreText.text = "Player Score:";
         m_AIScoreText.text = "AI Score:";
+        Text[] t = GameObject.Find("ScoreCanvas").GetComponentsInChildren<Text>();
+
+
+        for (int i = 0; i < t.Length; ++i)
+        {
+            if (t[i].name == "CountDownText")
+            {
+                m_DelayText = t[i];
+            }
+        }
         #endregion
 
         #region RESOURCE INITIALIZATION
@@ -256,6 +270,8 @@ public class GameLogic : MonoBehaviour
 
         m_PlayerWinnerEndScreen.SetActive(false);
         m_AIWinnerEndScreen.SetActive(false);
+
+        m_bDelayAfterAScore = false;
     }
 
     // Update is called once per frame
@@ -263,8 +279,27 @@ public class GameLogic : MonoBehaviour
     {
         float dt = Time.fixedDeltaTime;
 
+        
+        if( m_bDelayAfterAScore )
+        {
+            m_DelayText.enabled = true;
+            if (m_fTimer >= m_iDelayBetweenScores)
+            {
+                RestartGame();
+                m_fTimer = 0.0f;
+                m_sStatus.Paused = false;
+                m_bDelayAfterAScore = false;
+                m_DelayText.enabled = true;
+                m_DelayText.enabled = false;
+            }
+            
 
-        if (!m_sStatus.Paused)
+            m_fTimer += dt;
+
+            
+            m_DelayText.text = ((int)(m_iDelayBetweenScores - m_fTimer)).ToString();
+        }
+        if (!m_sStatus.Paused && !m_bDelayAfterAScore)
         {
             if (!m_bStopUpdate)
             {
@@ -274,7 +309,10 @@ public class GameLogic : MonoBehaviour
                     if ((m_iPlayerScore != m_iMaxScore && m_iAIScore != m_iMaxScore))
                     {
                         m_sStatus.Status = false;
-                        RestartGame();
+                        m_bDelayAfterAScore = true;
+                        m_fTimer = 0.0f;
+                        m_sStatus.Paused = true;
+                        InformBehaviours();
                     }
                     else
                     {
@@ -336,7 +374,8 @@ public class GameLogic : MonoBehaviour
             }
         }
 
-
+        //Wait 3 seconds
+        //
 
         InformBehaviours();
         //m_Ball.transform.position = m_vInitialBallPosition;

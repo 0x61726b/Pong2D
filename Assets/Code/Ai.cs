@@ -9,10 +9,12 @@ public class Ai : MonoBehaviour
     private enum Difficulty
     {
         Easy,
+        Normal,
         Hard,
         Unfair
     }
     private float Range;
+    private Difficulty m_Difficulty;
 	// Use this for initialization
 	void Start ()
     {
@@ -23,6 +25,9 @@ public class Ai : MonoBehaviour
         m_Ball = GameObject.Find("Ball") as GameObject;
 
         Range = 50;
+
+        m_Difficulty = Difficulty.Normal; //Default
+
 	}
 	
 	// Update is called once per frame
