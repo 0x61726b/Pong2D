@@ -1,17 +1,21 @@
-﻿using UnityEngine;
+﻿//--------------------------------------------------------------------------------
+//This is a file from Pong2D.A hobby project for Gram Games evaluation
+//
+//Copyright (c) Alperen Gezer.All rights reserved.
+//
+//MainMenu.cs
+//
+//This is the class that handles the buttons to launch the level
+//and setting difficulty
+//--------------------------------------------------------------------------------
+using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
-
+//--------------------------------------------------------------------------------
 public class MainMenu : MonoBehaviour
 {
-    private Button[] m_Buttons;
-    
-    private Button m_ExitButton;
-    private Button m_StartButton;
-    private Slider[] m_Slider;
-    
-	// Use this for initialization
-	void Start ()
+    //--------------------------------------------------------------------------------
+	public void Start ()
     {
         m_Buttons = GameObject.Find("GlobalCanvas").GetComponentsInChildren<Button>();
         m_Slider = GameObject.Find("GlobalCanvas").GetComponentsInChildren<Slider>();
@@ -27,21 +31,36 @@ public class MainMenu : MonoBehaviour
             {
                 m_StartButton = m_Buttons[i];
             }
+            if (m_Buttons[i].name == "TwoPlayerButton")
+            {
+                m_2PlayerStart = m_Buttons[i];
+            }
         }
         m_ExitButton.onClick.AddListener(new UnityEngine.Events.UnityAction(ExitButtonClick));
         m_StartButton.onClick.AddListener(new UnityEngine.Events.UnityAction(LoadLevel));
+        m_2PlayerStart.onClick.AddListener(new UnityEngine.Events.UnityAction(Load2Player));
 	}
-	
-	// Update is called once per frame
-	void Update () {
+    //--------------------------------------------------------------------------------
+	public void Update ()
+    {
 	
 	}
-    void LoadLevel()
+    //--------------------------------------------------------------------------------
+    public void Load2Player()
+    {
+        PlayerPrefs.SetInt("Is2Player", 1);
+        Application.LoadLevel("Level1");
+        
+    }
+    //--------------------------------------------------------------------------------
+    public void LoadLevel()
     {
         Application.LoadLevel("Level1");
         PlayerPrefs.SetFloat("Difficulty", m_Slider[0].value);
+        PlayerPrefs.SetInt("Is2Player", 0);
     }
-    void ExitButtonClick()
+    //--------------------------------------------------------------------------------
+    public void ExitButtonClick()
     {
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
@@ -49,4 +68,18 @@ public class MainMenu : MonoBehaviour
         Application.Quit();
 #endif
     }
+    //--------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------
+    //-------------------------------Variables----------------------------------------
+    //--------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------
+    private Button[] m_Buttons;
+    private Button m_ExitButton;
+    private Button m_StartButton;
+    private Button m_2PlayerStart;
+    private Slider[] m_Slider;
 }
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+// ~End of MainMenu.cs
+//--------------------------------------------------------------------------------

@@ -1,175 +1,29 @@
-﻿using UnityEngine;
+﻿//--------------------------------------------------------------------------------
+//This is a file from Pong2D.A hobby project for Gram Games evaluation
+//
+//Copyright (c) Alperen Gezer.All rights reserved.
+//
+//GameLogic.cs
+//
+//This class is attached to an empty game object and controls basically the game.
+//It creates the Paddles and the Ball.Sets difficulty initializes UI elemets
+//control the game state
+//--------------------------------------------------------------------------------
+using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
-
+//--------------------------------------------------------------------------------
 public class GameLogic : MonoBehaviour
 {
-    #region OBJECTS AND STUFF
-    private GameObject m_Ball;
-    private GameObject m_Paddle;
-    private GameObject m_AIPaddle;
-    private Vector2 m_vScreenBoundary;
-    private Vector2 m_vBallPosition;
-    private bool m_bDebug = false;
-    private int m_iSphereRadius;
-    private GameObject m_PlayerWinnerEndScreen;
-    private GameObject m_AIWinnerEndScreen;
-
-    private Vector3 m_vInitialBallPosition;
-    private Vector3 m_vInitialPlayerPaddlePosition;
-    private Vector3 m_vInitialAIPaddlePosition;
-    private float m_fTimer;
-    private bool m_bDelayAfterAScore;
-    #endregion
-
-    #region GAME STATE AND STUFF
-
-    private const int m_iMaxScore = 5;
-    private const int m_iDelayBetweenScores = 3;
-    public struct GameState
-    {
-        private bool m_bStatus;
-
-        public bool Status
-        {
-            get { return m_bStatus; }
-            set { m_bStatus = value; }
-        }
-
-        private int m_iWinner;
-        public int Winner
-        {
-            get { return m_iWinner; }
-            set
-            {
-                m_iWinner = value;
-            }
-        }
-        public bool Paused { get; set; }
-        //public string WinnerName { get; set; }
-
-        public GameState(bool bStatus, int iWinner, bool paused)
-        {
-            m_bStatus = bStatus;
-            m_iWinner = iWinner;
-            Paused = paused;
-        }
-    }
-    private static GameState m_sStatus;
-    public static GameState GameStatus
-    {
-        get { return m_sStatus; }
-        set { m_sStatus = value; }
-    }
-    private bool m_bStopUpdate = false;
-    void GameOver()
-    {
-        if (m_sStatus.Winner == 1) //Player scores
-            m_iPlayerScore++;
-        else
-            m_iAIScore++;
-    }
-    void SetGameStatus(object c)
-    {
-        GameState desiredState = (GameState)c;
-
-        m_sStatus = desiredState;
-
-        InformBehaviours();
-
-        m_PauseMenu.SetActive(false);
-        m_MenuButton.enabled = true;
-    }
-    void InformBehaviours()
-    {
-        GameObject.Find("Ball").SendMessage("CheckGameStatus", m_sStatus);
-        GameObject.Find("GameLogic").SendMessage("CheckGameStatus", m_sStatus);
-    }
-    private int m_iPlayerScore;
-    private int m_iAIScore;
-
-    #endregion
-
-    #region UI STUFF
-
-    private Text[] m_CanvasTextComps;
-    private Text m_PlayerScoreText;
-    private Text m_AIScoreText;
-    private Button[] m_CanvasButtons;
-    private Button m_MenuButton;
-    private Text m_DelayText;
-
-    private GameObject m_PauseMenu;
-    private Button[] m_PauseMenuButtons;
-    private Button m_ExitButton;
-    private Button m_GoBackButton;
-    private Button m_RestartButton;
-    private Button m_MainMenuButton;
-    void OnPauseMenuExitButtonClick()
-    {
-        m_MenuButton.enabled = true;
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
-    }
-    void OnMainMenuButtonClick()
-    {
-        Application.LoadLevel("MainMenu");
-    }
-    void OnPauseMenuGoBackButtonClick()
-    {
-        m_MenuButton.enabled = true;
-        m_sStatus.Paused = false;
-        InformBehaviours();
-        m_PauseMenu.SetActive(false);
-    }
-    void OnPauseMenuRestartButtonClick()
-    {
-        m_MenuButton.enabled = true;
-        Restart();
-    }
-    void OnMenuButtonClick()
-    {
-        m_MenuButton.enabled = false;
-        m_sStatus.Paused = true;
-        GameObject.Find("Ball").SendMessage("CheckGameStatus", m_sStatus);
-
-        m_PauseMenu.SetActive(true);
-    }
-    void UpdateScoreUI()
-    {
-        if (m_iPlayerScore >= m_iMaxScore && m_sStatus.Status)
-        {
-            m_PlayerWinnerEndScreen.SetActive(true);
-
-            m_sStatus.Paused = true;
-            m_sStatus.Winner = 1;
-            m_sStatus.Status = false;
-
-            m_bStopUpdate = true;
-            InformBehaviours();
-        }
-        if (m_iAIScore >= m_iMaxScore && m_sStatus.Status)
-        {
-            m_AIWinnerEndScreen.SetActive(true);
-            m_sStatus.Paused = true;
-            m_sStatus.Winner = 0;
-            m_sStatus.Status = false;
-            m_bStopUpdate = true;
-            InformBehaviours();
-        }
-        m_PlayerScoreText.text = "Player Score:" + m_iPlayerScore.ToString();
-        m_AIScoreText.text = "AI Score:" + m_iAIScore.ToString();
-    }
-    #endregion
-
-
+    //--------------------------------------------------------------------------------
     public void Start()
     {
         Application.targetFrameRate = 60;
-        m_iSphereRadius = 1;
+        
+        m_b2Player = false;
+        if (PlayerPrefs.GetInt("Is2Player") == 1)
+            m_b2Player = true;
+
         #region UI STUFF
         m_iPlayerScore = 0;
         m_iAIScore = 0;
@@ -245,7 +99,6 @@ public class GameLogic : MonoBehaviour
 
         #region RESOURCE INITIALIZATION
         m_Ball = Resources.Load("Ball", typeof(GameObject)) as GameObject;
-        
         m_Paddle = Resources.Load("Paddle", typeof(GameObject)) as GameObject;
         m_vInitialBallPosition = m_Ball.transform.position;
 
@@ -256,24 +109,42 @@ public class GameLogic : MonoBehaviour
         m_Paddle = Instantiate(m_Paddle);
         m_Paddle.name = "LeftPaddle";
         m_vInitialPlayerPaddlePosition = m_Paddle.transform.position;
+        m_Paddle.SendMessage("SetPlayer", true);
 
-        m_AIPaddle = Resources.Load("AIPaddle", typeof(GameObject)) as GameObject;
-        m_AIPaddle.transform.position = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width - paddleOffsetFromEdge, Screen.height / 2, 0));
-        m_AIPaddle.transform.position += new Vector3(0, 0, 1);
-        m_AIPaddle.transform.localScale = new Vector3(0.1f, 0.5f, 0);
-        m_AIPaddle = Instantiate(m_AIPaddle);
-        m_AIPaddle.name = "AIPaddle";
-        m_vInitialAIPaddlePosition = m_AIPaddle.transform.position;
-
+        if (m_b2Player)
+        {
+            m_Player2Paddle = Resources.Load("Player2Paddle", typeof(GameObject)) as GameObject;
+            paddleOffsetFromEdge = m_Player2Paddle.GetComponent<BoxCollider2D>().bounds.extents.x / 2;
+            m_Player2Paddle.transform.position = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width - paddleOffsetFromEdge, Screen.height / 2, 0));
+            m_Player2Paddle.transform.position += new Vector3(0, 0, 1);
+            m_Player2Paddle.transform.localScale = new Vector3(0.1f, 0.5f, 0);
+            m_Player2Paddle = Instantiate(m_Player2Paddle);
+            m_Player2Paddle.name = "Player2Paddle";
+            m_vInitial2PlayerPaddlePosition = m_Player2Paddle.transform.position;
+            m_Player2Paddle.SendMessage("SetPlayer", false);
+        }
+        else
+        {
+            m_AIPaddle = Resources.Load("AIPaddle", typeof(GameObject)) as GameObject;
+            m_AIPaddle.transform.position = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width - paddleOffsetFromEdge, Screen.height / 2, 0));
+            m_AIPaddle.transform.position += new Vector3(0, 0, 1);
+            m_AIPaddle.transform.localScale = new Vector3(0.1f, 0.5f, 0);
+            m_AIPaddle = Instantiate(m_AIPaddle);
+            m_AIPaddle.name = "AIPaddle";
+            m_vInitial2PlayerPaddlePosition = m_AIPaddle.transform.position;
+            m_Player2Paddle = m_AIPaddle;
+        }
+        Ai.SpeedState s = Ai.SpeedState.Linear;
+        
         m_Ball = Instantiate(m_Ball);
         m_Ball.name = "Ball";
         m_Ball.transform.localScale = new Vector3(0.2f, 0.2f, 0);
-        m_Ball.GetComponent<Renderer>().sortingOrder = 0;
-        m_Ball.GetComponent<Renderer>().sortingLayerName = "GameO";
+        m_Ball.SendMessage("SetSpeedState", s);
         m_vScreenBoundary = new Vector2(Screen.width, Screen.height);
 
         #endregion
 
+        #region Game State Initialization
         GameState initialStatus = new GameState(false, -1, false);
         m_sStatus = initialStatus;
 
@@ -293,14 +164,13 @@ public class GameLogic : MonoBehaviour
             float difficulty = PlayerPrefs.GetFloat("Difficulty");
             //Debug.Log(difficulty.ToString());
         }
+        #endregion
     }
-
-    // Update is called once per frame
-    void Update()
+    //--------------------------------------------------------------------------------
+    public void Update()
     {
         float dt = Time.fixedDeltaTime;
 
-        
         if( m_bDelayAfterAScore )
         {
             m_DelayText.enabled = true;
@@ -313,11 +183,8 @@ public class GameLogic : MonoBehaviour
                 m_DelayText.enabled = true;
                 m_DelayText.enabled = false;
             }
-            
-
             m_fTimer += dt;
 
-            
             m_DelayText.text = ((int)(m_iDelayBetweenScores - m_fTimer)).ToString();
         }
         if (!m_sStatus.Paused && !m_bDelayAfterAScore)
@@ -339,13 +206,13 @@ public class GameLogic : MonoBehaviour
                     {
                         m_sStatus.Status = true;
                     }
-
                 }
             }
             UpdateScoreUI();
         }
     }
-    void Restart()
+    //--------------------------------------------------------------------------------
+    public void Restart()
     {
         m_sStatus.Paused = false;
         m_sStatus.Status = false;
@@ -364,16 +231,14 @@ public class GameLogic : MonoBehaviour
             (m_AIWinnerEndScreen).SetActive(false);
             //Destroy(m_AIWinnerEndScreen); //Somehow it destroys the resource loaded WTF
         }
-
-
         GameObject.Find("Ball").SendMessage("Restart");
 
         InformBehaviours();
-        
         m_Paddle.transform.position = m_vInitialPlayerPaddlePosition;
-        m_AIPaddle.transform.position = m_vInitialAIPaddlePosition;
+        m_Player2Paddle.transform.position = m_vInitial2PlayerPaddlePosition;
     }
-    void RestartGame()
+    //--------------------------------------------------------------------------------
+    public void RestartGame()
     {
         m_sStatus.Paused = false;
         m_sStatus.Status = false;
@@ -395,11 +260,192 @@ public class GameLogic : MonoBehaviour
         InformBehaviours();
         
         m_Paddle.transform.position = m_vInitialPlayerPaddlePosition;
-        m_AIPaddle.transform.position = m_vInitialAIPaddlePosition;
+        m_Player2Paddle.transform.position = m_vInitial2PlayerPaddlePosition;
     }
-
-    Vector3 ToScreen(Vector3 V)
+    //--------------------------------------------------------------------------------
+    public Vector3 ToScreen(Vector3 V)
     {
         return Camera.main.WorldToScreenPoint(V);
     }
+    //--------------------------------------------------------------------------------
+    public void GameOver()
+    {
+        if (m_sStatus.Winner == 1) //Player scores
+            m_iPlayerScore++;
+        else
+            m_iAIScore++;
+    }
+    //--------------------------------------------------------------------------------
+    public void SetGameStatus(object c)
+    {
+        GameState desiredState = (GameState)c;
+
+        m_sStatus = desiredState;
+
+        InformBehaviours();
+
+        m_PauseMenu.SetActive(false);
+        m_MenuButton.enabled = true;
+    }
+    //--------------------------------------------------------------------------------
+    public void InformBehaviours()
+    {
+        GameObject.Find("Ball").SendMessage("CheckGameStatus", m_sStatus);
+
+    }
+    //--------------------------------------------------------------------------------
+    public void OnPauseMenuExitButtonClick()
+    {
+        m_MenuButton.enabled = true;
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
+    }
+    //--------------------------------------------------------------------------------
+    public void OnMainMenuButtonClick()
+    {
+        Application.LoadLevel("MainMenu");
+    }
+   //--------------------------------------------------------------------------------
+    public void OnPauseMenuGoBackButtonClick()
+    {
+        m_MenuButton.enabled = true;
+        m_sStatus.Paused = false;
+        InformBehaviours();
+        m_PauseMenu.SetActive(false);
+    }
+    //--------------------------------------------------------------------------------
+    public void OnPauseMenuRestartButtonClick()
+    {
+        m_MenuButton.enabled = true;
+        Restart();
+    }
+    //--------------------------------------------------------------------------------
+    public void OnMenuButtonClick()
+    {
+        m_MenuButton.enabled = false;
+        m_sStatus.Paused = true;
+        GameObject.Find("Ball").SendMessage("CheckGameStatus", m_sStatus);
+
+        m_PauseMenu.SetActive(true);
+    }
+    //--------------------------------------------------------------------------------
+    public void UpdateScoreUI()
+    {
+        if (m_iPlayerScore >= m_iMaxScore && m_sStatus.Status)
+        {
+            m_PlayerWinnerEndScreen.SetActive(true);
+
+            m_sStatus.Paused = true;
+            m_sStatus.Winner = 1;
+            m_sStatus.Status = false;
+
+            m_bStopUpdate = true;
+            InformBehaviours();
+        }
+        if (m_iAIScore >= m_iMaxScore && m_sStatus.Status)
+        {
+            m_AIWinnerEndScreen.SetActive(true);
+            m_sStatus.Paused = true;
+            m_sStatus.Winner = 0;
+            m_sStatus.Status = false;
+            m_bStopUpdate = true;
+            InformBehaviours();
+        }
+        m_PlayerScoreText.text = "Player 1 Score:" + m_iPlayerScore.ToString();
+        m_AIScoreText.text = "Player 2 Score:" + m_iAIScore.ToString();
+    }
+    //--------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------
+    //-------------------------------Variables----------------------------------------
+    //--------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------
+    #region OBJECTS AND STUFF
+    private GameObject m_Ball;
+    private GameObject m_Paddle;
+    private GameObject m_AIPaddle;
+    private GameObject m_Player2Paddle;
+    private Vector2 m_vScreenBoundary;
+    private Vector2 m_vBallPosition;
+    private bool m_bDebug = false;
+    private int m_iSphereRadius;
+    private GameObject m_PlayerWinnerEndScreen;
+    private GameObject m_AIWinnerEndScreen;
+
+    private Vector3 m_vInitialBallPosition;
+    private Vector3 m_vInitialPlayerPaddlePosition;
+    private Vector3 m_vInitial2PlayerPaddlePosition;
+    private float m_fTimer;
+    private bool m_bDelayAfterAScore;
+    #endregion
+
+    #region GAME STATE AND STUFF
+
+    private bool m_b2Player;
+    private const int m_iMaxScore = 5;
+    private const int m_iDelayBetweenScores = 3;
+    public struct GameState
+    {
+        private bool m_bStatus;
+
+        public bool Status
+        {
+            get { return m_bStatus; }
+            set { m_bStatus = value; }
+        }
+
+        private int m_iWinner;
+        public int Winner
+        {
+            get { return m_iWinner; }
+            set
+            {
+                m_iWinner = value;
+            }
+        }
+        public bool Paused { get; set; }
+        //public string WinnerName { get; set; }
+
+        public GameState(bool bStatus, int iWinner, bool paused)
+        {
+            m_bStatus = bStatus;
+            m_iWinner = iWinner;
+            Paused = paused;
+        }
+    }
+    private static GameState m_sStatus;
+    public static GameState GameStatus
+    {
+        get { return m_sStatus; }
+        set { m_sStatus = value; }
+    }
+    private bool m_bStopUpdate = false;
+    private int m_iPlayerScore;
+    private int m_iAIScore;
+
+    #endregion
+
+    #region UI STUFF
+
+    private Text[] m_CanvasTextComps;
+    private Text m_PlayerScoreText;
+    private Text m_AIScoreText;
+    private Button[] m_CanvasButtons;
+    private Button m_MenuButton;
+    private Text m_DelayText;
+
+    private GameObject m_PauseMenu;
+    private Button[] m_PauseMenuButtons;
+    private Button m_ExitButton;
+    private Button m_GoBackButton;
+    private Button m_RestartButton;
+    private Button m_MainMenuButton;
+   
+    #endregion
 }
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+// ~End of GameLogic.cs
+//--------------------------------------------------------------------------------

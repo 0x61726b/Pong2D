@@ -1,45 +1,35 @@
-﻿using UnityEngine;
+﻿//--------------------------------------------------------------------------------
+//This is a file from Pong2D.A hobby project for Gram Games evaluation
+//
+//Copyright (c) Alperen Gezer.All rights reserved.
+//
+//Ball.cs
+//
+//There is nothing much to explain here.
+//--------------------------------------------------------------------------------
+using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
-
+//--------------------------------------------------------------------------------
 public class Ball : MonoBehaviour 
 {
-    private Vector2 m_vBallSpeed;
-    private Vector2 m_vScreenBoundary;
-    private Vector2 m_vBallPosition;
-    private Vector2 m_vInitialBallPosition;
-    private Vector2 m_vInitialBallSpeed;
-    private Vector2 m_vSpeedMultiplier;
-    private Vector2 m_vPlayerPaddleSpeed;
-    private Vector2 m_vAIPaddleSpeed;
-    private bool m_bExpSpeed = false;
-    private bool m_bDebug = false;
-    private bool m_bPaused;
-	// Use this for initialization
-	void Start () 
+    //--------------------------------------------------------------------------------
+    public Ball()
     {
         
-
+    }
+    //--------------------------------------------------------------------------------
+	public void Start () 
+    {
         m_vScreenBoundary = new Vector2(Screen.width, Screen.height);
-
         m_vInitialBallPosition = transform.position;
-
         m_bPaused = false;
-
-        GetComponent<Renderer>().material.renderQueue = 1;
-        GetComponent<Renderer>().sortingOrder= 0;
-
-        
-        
 	}
-	
-	// Update is called once per frame
-	void Update ()
+    //--------------------------------------------------------------------------------
+	public void Update ()
     {
         float dt = Time.fixedDeltaTime;
-
         
-
         if (!m_bPaused)
         {
             m_vBallPosition += (m_vSpeedMultiplier) * dt;
@@ -49,25 +39,20 @@ public class Ball : MonoBehaviour
             {
                 m_vSpeedMultiplier.x += dt*0.5f;
             }
-            else
-            {
-
-            }
         }
-
-        
 	}
-    void ApplyChanges()
+    //--------------------------------------------------------------------------------
+    public void ApplyChanges()
     {
         transform.position = m_vBallPosition;
     }
-    void CheckCollisionWithScreen()
+    /// <summary>
+    /// This is used to check if the Ball goes offscreen and unprevent it.
+    /// If the ball goes left or right side without colliding with Paddle
+    /// It means that one of the players have scored and sends a SetGameStatus command to the GameLogic object to make them aware
+    /// </summary>
+    public void CheckCollisionWithScreen()
     {
-        if (m_bDebug)
-        {
-            //Debug.Log(ToScreen(m_vBallPosition).ToString());
-        }
-
         Vector3 HalfExtents = this.GetComponent<BoxCollider2D>().bounds.extents;
         Vector3 PositionMinusHExtents = new Vector3(m_vBallPosition.x - HalfExtents.x, m_vBallPosition.y - HalfExtents.y);
         Vector3 PositionPlusHExtents = new Vector3(m_vBallPosition.x + HalfExtents.x, m_vBallPosition.y + HalfExtents.y);
@@ -78,8 +63,6 @@ public class Ball : MonoBehaviour
             winner = Mathf.Sign(winner);
 
             GameLogic.GameState gameStatus = new GameLogic.GameState(true,(int)winner,false);
-            
-            
             GameObject.Find("GameLogic").SendMessage("SetGameStatus", gameStatus);
 
             m_vSpeedMultiplier = m_vInitialBallSpeed;
@@ -90,7 +73,12 @@ public class Ball : MonoBehaviour
             m_vSpeedMultiplier.y *= -1;
         }
     }
-    void BallPaddleCollision(Collision2D coll)
+    /// <summary>
+    /// This is called from Paddle object and simply reflects the vector 
+    /// On Y axis it takes the paddle speed into consideration when calculating the Y component of the reflected vector
+    /// </summary>
+    /// <param name="coll"></param>
+    public void BallPaddleCollision(Collision2D coll)
     {
         //****************This is called Collision Detection with Contact Points Averaging
         //****************
@@ -119,7 +107,7 @@ public class Ball : MonoBehaviour
         //****************Though I decided not to include this since it was unstable
 
         Vector2 Reflect = Vector2.zero;
-        if( coll.collider.name == "AIPaddle")
+        if( coll.collider.name == "Player2Paddle")
         {
             Reflect = m_vAIPaddleSpeed * 0.4f;
         }
@@ -130,18 +118,22 @@ public class Ball : MonoBehaviour
 
         m_vSpeedMultiplier.x *= -1;
 
-        Debug.Log(-Reflect.y);
         m_vSpeedMultiplier.y = -Reflect.y;
+
+        Debug.Log(Reflect.ToString());
     }
-    void UpdatePaddleSpeed(Vector2 Speed)
+    //--------------------------------------------------------------------------------
+    public void UpdatePaddleSpeed(Vector2 Speed)
     {
         m_vPlayerPaddleSpeed = Speed;
     }
-    void UpdateAIPaddleSpeed(Vector2 Speed)
+    //--------------------------------------------------------------------------------
+    public void UpdateAIPaddleSpeed(Vector2 Speed)
     {
         m_vAIPaddleSpeed = Speed;
     }
-    void SetSpeedState(Ai.SpeedState b)
+    //--------------------------------------------------------------------------------
+    public void SetSpeedState(Ai.SpeedState b)
     {
         Ai.SpeedState state = b;
 
@@ -160,20 +152,41 @@ public class Ball : MonoBehaviour
         }
         m_vInitialBallSpeed = m_vSpeedMultiplier;
     }
-    Vector3 ToScreen(Vector3 V)
+    //--------------------------------------------------------------------------------
+    public Vector3 ToScreen(Vector3 V)
     {
         return Camera.main.WorldToScreenPoint(V);
     }
-    void Restart()
+    //--------------------------------------------------------------------------------
+    public void Restart()
     {
         m_vBallPosition = new Vector2(0, 0);
         m_vBallSpeed = m_vInitialBallSpeed;
     }
-    void CheckGameStatus(object status)
+    //--------------------------------------------------------------------------------
+    public void CheckGameStatus(object status)
     {
-
         GameLogic.GameState desiredState = (GameLogic.GameState)status;
 
         m_bPaused = desiredState.Paused;
     }
+    //--------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------
+    //-------------------------------Variables----------------------------------------
+    //--------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------
+    private Vector2 m_vBallSpeed;
+    private Vector2 m_vScreenBoundary;
+    private Vector2 m_vBallPosition;
+    private Vector2 m_vInitialBallPosition;
+    private Vector2 m_vInitialBallSpeed;
+    private Vector2 m_vSpeedMultiplier;
+    private Vector2 m_vPlayerPaddleSpeed;
+    private Vector2 m_vAIPaddleSpeed;
+    private bool m_bExpSpeed = false;
+    private bool m_bDebug = false;
+    private bool m_bPaused;
 }
+//--------------------------------------------------------------------------------
+// ~End of Ball.cs
+//--------------------------------------------------------------------------------

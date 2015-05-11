@@ -1,38 +1,36 @@
-﻿using UnityEngine;
+﻿//--------------------------------------------------------------------------------
+//This is a file from Pong2D.A hobby project for Gram Games evaluation
+//
+//Copyright (c) Alperen Gezer.All rights reserved.
+//
+//Ai.cs
+//
+//This is the AI class to manipulate and illustrate to play against the artificial intelligence.
+//This class is basically the same as the Paddle except this class handles its movement itself.
+//There are 5 difficulties Easy,Normal,Hard,Unfair and Impossible and 3 speed states Constant,Linear,Exponential
+//Methods to create the difficulties is pretty basic.
+//Spring method is taken from here: http://allenchou.net/2015/04/game-math-numeric-springing-examples/
+//4 difficulties created with Spring method,each has different Damping values
+//With this they look like they have different "awareness"
+//Impossible difficulty copies ball's movement so
+//YOU CAN NOT win against Impossible difficulty UNLESS Discrete Collision helps you and ball goes through the paddle between 2 frames with enough speed.(It happens)
+//--------------------------------------------------------------------------------
+using UnityEngine;
 using System.Collections;
-
+//--------------------------------------------------------------------------------
 public class Ai : MonoBehaviour
 {
-    private Vector3 m_vActorPosition;
-    private Vector2 m_vSpring;
-    private GameObject m_Ball;
-    private Vector2 m_vSpeed = Vector2.zero;
-    private enum Difficulty
+    //--------------------------------------------------------------------------------
+    public Ai()
     {
-        Easy = 1,
-        Normal = 2,
-        Hard = 3,
-        Unfair = 4,
-        Impossible = 5
+
     }
-    public enum SpeedState
-    {
-        Constant,
-        Linear,
-        Exponential
-    }
-    private float Range;
-    private Difficulty m_Difficulty;
-    private SpeedState m_SpeedState;
-	// Use this for initialization
+    //--------------------------------------------------------------------------------
 	void Start ()
     {
         m_vActorPosition = new Vector3(0, 0, 0);
-        //Debug.Log(transform.position.y.ToString());
         m_vSpring = new Vector2(transform.position.y, 0);
-
         m_Ball = GameObject.Find("Ball") as GameObject;
-
 
         m_Difficulty = Difficulty.Impossible; //Default
         m_SpeedState = SpeedState.Exponential; //Default
@@ -75,9 +73,9 @@ public class Ai : MonoBehaviour
         }
         m_Ball.SendMessage("SetSpeedState", m_SpeedState);
 	}
-	void Update () 
+    //--------------------------------------------------------------------------------
+	public void Update () 
     {
-
         switch(m_Difficulty)
         {
             case Difficulty.Easy:
@@ -110,14 +108,16 @@ public class Ai : MonoBehaviour
         }
 
 	}
-    void EasyDifficulty()
+    //--------------------------------------------------------------------------------
+    public void EasyDifficulty()
     {
         //No range check
         //High Damping
         //High angular frequency
         m_vSpring = Spring(m_vSpring.x, m_vSpring.y, m_Ball.transform.position.y, 1.4f, 2, Time.deltaTime);
     }
-    void NormalDifficulty()
+    //--------------------------------------------------------------------------------
+    public void NormalDifficulty()
     {
         Vector2 targetPos = m_Ball.transform.position;
         Vector2 Distance = new Vector2(transform.position.x, transform.position.y) - targetPos;
@@ -134,7 +134,8 @@ public class Ai : MonoBehaviour
             m_vSpring = Spring(m_vSpring.x, m_vSpring.y, m_Ball.transform.position.y, 1.7f, 2, Time.deltaTime);
         }
     }
-    void HardDifficulty()
+    //--------------------------------------------------------------------------------
+    public void HardDifficulty()
     {
         //Range Check R = 100
         //Low damping
@@ -151,7 +152,8 @@ public class Ai : MonoBehaviour
             m_vSpring = Spring(m_vSpring.x, m_vSpring.y, m_Ball.transform.position.y, 0.4f, 6, Time.deltaTime);
         }
     }
-    void UnfairDifficulty()
+    //--------------------------------------------------------------------------------
+    public void UnfairDifficulty()
     {
         Vector2 targetPos = m_Ball.transform.position;
         Vector2 Distance = new Vector2(transform.position.x, transform.position.y) - targetPos;
@@ -166,11 +168,13 @@ public class Ai : MonoBehaviour
             m_vSpring = Spring(m_vSpring.x, m_vSpring.y, m_Ball.transform.position.y, 0.4f, sqLen, Time.deltaTime);
         }
     }
-    void ImpossibleDifficulty()
+    //--------------------------------------------------------------------------------
+    public void ImpossibleDifficulty()
     {
-        transform.position= new Vector3(transform.position.x,m_Ball.transform.position.y);
+        //huehue
+        transform.position = new Vector3(transform.position.x,m_Ball.transform.position.y);
     }
-
+    //--------------------------------------------------------------------------------
     public Vector2 Spring( float x,float v,float Xt,float Zeta,float Omega,float h)
     {
         float f = 1.0f + 2.0f * h * Zeta * Omega;
@@ -184,6 +188,7 @@ public class Ai : MonoBehaviour
         v = detV * detInv;
         return new Vector2(x, v);
     }
+    //--------------------------------------------------------------------------------
     void OnCollisionEnter2D(Collision2D c)
     {
         if (c.gameObject.name == "Ball")
@@ -191,4 +196,30 @@ public class Ai : MonoBehaviour
             c.gameObject.SendMessage("BallPaddleCollision", c);
         }
     }
+    //--------------------------------------------------------------------------------
+    private Vector3 m_vActorPosition;
+    private Vector2 m_vSpring;
+    private GameObject m_Ball;
+    private Vector2 m_vSpeed = Vector2.zero;
+    private enum Difficulty
+    {
+        Easy = 1,
+        Normal = 2,
+        Hard = 3,
+        Unfair = 4,
+        Impossible = 5
+    }
+    public enum SpeedState
+    {
+        Constant,
+        Linear,
+        Exponential
+    }
+    private float Range;
+    private Difficulty m_Difficulty;
+    private SpeedState m_SpeedState;
+    //--------------------------------------------------------------------------------
 }
+//--------------------------------------------------------------------------------
+// ~End of Ai.cs
+//--------------------------------------------------------------------------------

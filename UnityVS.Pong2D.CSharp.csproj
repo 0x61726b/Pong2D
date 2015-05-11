@@ -62,7 +62,6 @@
     <Compile Include="Assets\Code\Ai.cs" />
     <Compile Include="Assets\Code\Ball.cs" />
     <Compile Include="Assets\Code\GameLogic.cs" />
-    <Compile Include="Assets\Code\InputManager.cs" />
     <Compile Include="Assets\Code\MainMenu.cs" />
     <Compile Include="Assets\Code\Paddle.cs" />
   </ItemGroup>
