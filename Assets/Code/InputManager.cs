@@ -104,7 +104,8 @@ public class InputManager : MonoBehaviour
                 float halfX = m_vScreenBoundary.x * 0.5f;
                 float halfY = m_vScreenBoundary.y * 0.5f;
 
-                if (inputPos.x <= halfX)
+                Debug.Log(halfY.ToString());
+                if (inputPos.x <= halfY)
                 {
                     GameLogic.GameState gameStatus = new GameLogic.GameState(false, (int)-1, false);
 
@@ -137,7 +138,7 @@ public class InputManager : MonoBehaviour
 
         m_vCurrentInputPosition = InputPosition + m_vLastInputPosition; //m_vLastInputPosition is for awaking from pause screen so paddle wont jump somewhere ridiciluous
 
-        if (m_vCurrentInputPosition.x <= halfX * 0.5f && m_bDragging)
+        if (m_vCurrentInputPosition.x <= halfX && m_bDragging)
         {
             Vector2 dv;
             if (!editor)
@@ -182,6 +183,7 @@ public class InputManager : MonoBehaviour
 
         m_bPaused = desiredState.Paused;
         m_vPreviousInputPosition = m_vCurrentInputPosition;
+        Debug.Log(m_bPaused.ToString());
     }
     void UpdatePaddleLinearVelocity()
     {

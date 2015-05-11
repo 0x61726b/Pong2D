@@ -24,7 +24,7 @@ public class GameLogic : MonoBehaviour
 
     #region GAME STATE AND STUFF
 
-    private const int m_iMaxScore = 2;
+    private const int m_iMaxScore = 5;
     private const int m_iDelayBetweenScores = 3;
     public struct GameState
     {
@@ -83,6 +83,7 @@ public class GameLogic : MonoBehaviour
     void InformBehaviours()
     {
         GameObject.Find("Ball").SendMessage("CheckGameStatus", m_sStatus);
+        GameObject.Find("GameLogic").SendMessage("CheckGameStatus", m_sStatus);
     }
     private int m_iPlayerScore;
     private int m_iAIScore;
@@ -103,6 +104,7 @@ public class GameLogic : MonoBehaviour
     private Button m_ExitButton;
     private Button m_GoBackButton;
     private Button m_RestartButton;
+    private Button m_MainMenuButton;
     void OnPauseMenuExitButtonClick()
     {
         m_MenuButton.enabled = true;
@@ -111,6 +113,10 @@ public class GameLogic : MonoBehaviour
 #else
         Application.Quit();
 #endif
+    }
+    void OnMainMenuButtonClick()
+    {
+        Application.LoadLevel("MainMenu");
     }
     void OnPauseMenuGoBackButtonClick()
     {
@@ -162,6 +168,7 @@ public class GameLogic : MonoBehaviour
 
     public void Start()
     {
+        Application.targetFrameRate = 60;
         m_iSphereRadius = 1;
         #region UI STUFF
         m_iPlayerScore = 0;
@@ -169,7 +176,7 @@ public class GameLogic : MonoBehaviour
 
         m_CanvasTextComps = GameObject.Find("ScoreCanvas").GetComponentsInChildren<Text>();
         m_CanvasButtons = GameObject.Find("ScoreCanvas").GetComponentsInChildren<Button>();
-
+        
         //PauseMenu
         m_PauseMenu = Resources.Load("PauseMenuPrefab", typeof(GameObject)) as GameObject;
 
@@ -193,6 +200,11 @@ public class GameLogic : MonoBehaviour
             {
                 m_RestartButton = m_PauseMenuButtons[i];
                 m_RestartButton.onClick.AddListener(new UnityEngine.Events.UnityAction(OnPauseMenuRestartButtonClick));
+            }
+            if (m_PauseMenuButtons[i].name == "MainMenuButton")
+            {
+                m_MainMenuButton = m_PauseMenuButtons[i];
+                m_MainMenuButton.onClick.AddListener(new UnityEngine.Events.UnityAction(OnMainMenuButtonClick));
             }
         }
 
@@ -233,6 +245,7 @@ public class GameLogic : MonoBehaviour
 
         #region RESOURCE INITIALIZATION
         m_Ball = Resources.Load("Ball", typeof(GameObject)) as GameObject;
+        
         m_Paddle = Resources.Load("Paddle", typeof(GameObject)) as GameObject;
         m_vInitialBallPosition = m_Ball.transform.position;
 
@@ -255,6 +268,8 @@ public class GameLogic : MonoBehaviour
         m_Ball = Instantiate(m_Ball);
         m_Ball.name = "Ball";
         m_Ball.transform.localScale = new Vector3(0.2f, 0.2f, 0);
+        m_Ball.GetComponent<Renderer>().sortingOrder = 0;
+        m_Ball.GetComponent<Renderer>().sortingLayerName = "GameO";
         m_vScreenBoundary = new Vector2(Screen.width, Screen.height);
 
         #endregion
@@ -272,6 +287,12 @@ public class GameLogic : MonoBehaviour
         m_AIWinnerEndScreen.SetActive(false);
 
         m_bDelayAfterAScore = false;
+
+        if (PlayerPrefs.GetFloat("Difficulty") != -1)
+        {
+            float difficulty = PlayerPrefs.GetFloat("Difficulty");
+            //Debug.Log(difficulty.ToString());
+        }
     }
 
     // Update is called once per frame
@@ -348,7 +369,7 @@ public class GameLogic : MonoBehaviour
         GameObject.Find("Ball").SendMessage("Restart");
 
         InformBehaviours();
-        //m_Ball.transform.position = m_vInitialBallPosition;
+        
         m_Paddle.transform.position = m_vInitialPlayerPaddlePosition;
         m_AIPaddle.transform.position = m_vInitialAIPaddlePosition;
     }
@@ -365,20 +386,14 @@ public class GameLogic : MonoBehaviour
             if (m_PlayerWinnerEndScreen.activeInHierarchy)
             {
                 (m_PlayerWinnerEndScreen).SetActive(false);
-                //Destroy(m_PlayerWinnerEndScreen); //Somehow it destroys the resource loaded WTF
             }
             if (m_AIWinnerEndScreen.activeInHierarchy)
             {
                 (m_AIWinnerEndScreen).SetActive(false);
-                //Destroy(m_AIWinnerEndScreen); //Somehow it destroys the resource loaded WTF
             }
         }
-
-        //Wait 3 seconds
-        //
-
         InformBehaviours();
-        //m_Ball.transform.position = m_vInitialBallPosition;
+        
         m_Paddle.transform.position = m_vInitialPlayerPaddlePosition;
         m_AIPaddle.transform.position = m_vInitialAIPaddlePosition;
     }
