@@ -406,7 +406,6 @@ public class GameLogic : MonoBehaviour
             }
         }
         public bool Paused { get; set; }
-        //public string WinnerName { get; set; }
 
         public GameState(bool bStatus, int iWinner, bool paused)
         {
